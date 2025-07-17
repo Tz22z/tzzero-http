@@ -47,6 +47,31 @@ public:
     void append(std::string_view str) { append(str.data(), str.size()); }
     void append(const void* data, size_t len) { append(static_cast<const char*>(data), len); }
 
+    // Write integers in network byte order
+    void append_int8(int8_t x);
+    void append_int16(int16_t x);
+    void append_int32(int32_t x);
+    void append_int64(int64_t x);
+
+    // Read integers in network byte order
+    int8_t read_int8();
+    int16_t read_int16();
+    int32_t read_int32();
+    int64_t read_int64();
+
+    int8_t peek_int8() const;
+    int16_t peek_int16() const;
+    int32_t peek_int32() const;
+    int64_t peek_int64() const;
+
+    // Prepend operations
+    void prepend(const void* data, size_t len);
+
+    // Ensure space
+    void ensure_writable_bytes(size_t len);
+    void has_written(size_t len) { write_index_ += len; }
+    void unwrite(size_t len) { write_index_ -= len; }
+
     // Search operations
     const char* find_crlf() const;
     const char* find_crlf(const char* start) const;
@@ -56,6 +81,10 @@ public:
     // I/O operations
     ssize_t read_fd(int fd, int* saved_errno);
     ssize_t write_fd(int fd, int* saved_errno);
+
+    // Zero-copy operations
+    std::vector<struct iovec> get_readable_iovec() const;
+    std::vector<struct iovec> get_writable_iovec();
 
     // String conversion
     std::string to_string() const;
