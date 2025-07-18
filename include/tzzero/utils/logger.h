@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include <mutex>
+#include <fstream>
 
 namespace tzzero::utils {
 
@@ -22,6 +23,10 @@ public:
     void set_level(LogLevel level) { level_ = level; }
     LogLevel get_level() const { return level_; }
     
+    void set_output_file(const std::string& filename);
+    void set_max_file_size(size_t max_size_mb) { max_file_size_ = max_size_mb * 1024 * 1024; }
+    void set_max_files(int max_files) { max_files_ = max_files; }
+    
     void log(LogLevel level, const std::string& message);
     void log(LogLevel level, const char* file, int line, const std::string& message);
 
@@ -30,6 +35,13 @@ private:
     LogLevel level_{LogLevel::INFO};
     std::mutex mutex_;
     
+    std::string output_file_;
+    std::ofstream file_stream_;
+    size_t current_file_size_{0};
+    size_t max_file_size_{100 * 1024 * 1024}; // 100MB default
+    int max_files_{10};
+    
+    void rotate_log_file();
     std::string level_to_string(LogLevel level) const;
     std::string get_timestamp() const;
 };
