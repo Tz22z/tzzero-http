@@ -30,13 +30,35 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/include
 )
 
-# Source files (will be added as we implement)
+# Source files
 set(TZZERO_SOURCES
-    # Core will be added later
+    # Utils
+    src/utils/buffer.cpp
+    src/utils/logger.cpp
+    
+    # Core
+    src/core/poller.cpp
+    
+    # Net (to be added)
+    # src/net/tcp_connection.cpp
+    # src/net/tcp_server.cpp
+    
+    # HTTP (to be added)
+    # src/http/http_server.cpp
+    # src/http/http_request.cpp
+    # src/http/http_response.cpp
 )
 
-# Main library (placeholder for now)
-# add_library(tzzero_lib STATIC ${TZZERO_SOURCES})
+# Main library
+add_library(tzzero_lib STATIC ${TZZERO_SOURCES})
 
-# Main server executable (placeholder)
+# Link libraries
+target_link_libraries(tzzero_lib PRIVATE Threads::Threads)
+
+if(ENABLE_TLS)
+    target_link_libraries(tzzero_lib PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+endif()
+
+# Main server executable (placeholder for now)
 # add_executable(tzzero-http src/main.cpp)
+# target_link_libraries(tzzero-http tzzero_lib)
