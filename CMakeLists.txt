@@ -39,6 +39,7 @@ set(TZZERO_SOURCES
     # Core
     src/core/poller.cpp
     src/core/epoll_poller.cpp
+    src/core/timer_queue.cpp
     
     # Net (to be added)
     # src/net/tcp_connection.cpp
@@ -63,4 +64,5 @@ endif()
 # Main server executable (placeholder for now)
 # add_executable(tzzero-http src/main.cpp)
 # target_link_libraries(tzzero-http tzzero_lib)
+
 
