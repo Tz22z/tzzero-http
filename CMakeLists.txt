@@ -40,6 +40,7 @@ set(TZZERO_SOURCES
     src/core/poller.cpp
     src/core/epoll_poller.cpp
     src/core/timer_queue.cpp
+    src/core/event_loop.cpp
     
     # Net (to be added)
     # src/net/tcp_connection.cpp
