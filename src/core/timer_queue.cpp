@@ -26,7 +26,7 @@ double now() {
 void read_timerfd(int timerfd) {
     uint64_t howmany;
     ssize_t n = ::read(timerfd, &howmany, sizeof(howmany));
-    // TODO: 应该检查读取是否成功，但暂时忽略
+    // 注意：应该检查读取是否成功，但暂时忽略
     (void)n;
 }
 
@@ -40,11 +40,11 @@ void reset_timerfd(int timerfd, double expiration) {
     
     int ret = ::timerfd_settime(timerfd, 0, &new_value, nullptr);
     if (ret) {
-        // TODO: 应该处理错误，但先让它能跑
+        // 注意：应该处理错误，但先让它能跑
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 std::atomic<uint64_t> Timer::s_num_created_{0};
 
@@ -70,7 +70,7 @@ TimerQueue::TimerQueue(EventLoop* loop)
     , timer_fd_(create_timerfd())
     , calling_expired_timers_(false)
 {
-    // Add timer fd to poller
+    // 将定时器文件描述符添加到轮询器
     loop_->get_poller()->add_fd(timer_fd_, Poller::EVENT_READ, [this](int, uint32_t) {
         handle_timer_fd();
     });
@@ -169,7 +169,7 @@ std::vector<TimerQueue::Entry> TimerQueue::get_expired(double now_time) {
     std::copy(timers_.begin(), end, std::back_inserter(expired));
     timers_.erase(timers_.begin(), end);
     
-    // 从active_timers_中移除
+    // 从 active_timers_ 中移除
     for (const auto& entry : expired) {
         ActiveTimer timer(entry.second, entry.second->sequence());
         active_timers_.erase(timer);
@@ -209,5 +209,5 @@ bool TimerQueue::insert(Timer* timer) {
     return earliest_changed;
 }
 
-} // namespace tzzero::core
+}  // namespace tzzero::core
 
