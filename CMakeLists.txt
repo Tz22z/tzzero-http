@@ -5,66 +5,66 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Build options
+// 构建选项
 option(ENABLE_IO_URING "Enable io_uring support" OFF)
 option(ENABLE_TLS "Enable TLS support" ON)
 option(BUILD_BENCHMARKS "Build benchmark tools" ON)
 option(BUILD_TESTS "Build tests" ON)
 
-# Compiler flags for performance
+// 性能相关的编译器标志
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fsanitize=address,undefined")
 
-# Find packages
+// 查找依赖包
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
-# OpenSSL for TLS
+// TLS 需要的 OpenSSL
 if(ENABLE_TLS)
     find_package(OpenSSL REQUIRED)
     add_compile_definitions(ENABLE_TLS)
 endif()
 
-# Include directories
+// 包含目录
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
 )
 
-# Source files
+// 源文件列表
 set(TZZERO_SOURCES
-    # Utils
+    // 工具类
     src/utils/buffer.cpp
     src/utils/logger.cpp
     
-    # Core
+    // 核心模块
     src/core/poller.cpp
     src/core/epoll_poller.cpp
     src/core/timer_queue.cpp
     src/core/event_loop.cpp
     
-    # Net (to be added)
-    # src/net/tcp_connection.cpp
-    # src/net/tcp_server.cpp
+    // 网络模块（待添加）
+    // src/net/tcp_connection.cpp
+    // src/net/tcp_server.cpp
     
-    # HTTP (to be added)
-    # src/http/http_server.cpp
-    # src/http/http_request.cpp
-    # src/http/http_response.cpp
+    // HTTP 模块（待添加）
+    // src/http/http_server.cpp
+    // src/http/http_request.cpp
+    // src/http/http_response.cpp
 )
 
-# Main library
+// 主库
 add_library(tzzero_lib STATIC ${TZZERO_SOURCES})
 
-# Link libraries
+// 链接库
 target_link_libraries(tzzero_lib PRIVATE Threads::Threads)
 
 if(ENABLE_TLS)
     target_link_libraries(tzzero_lib PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 endif()
 
-# Main server executable (placeholder for now)
-# add_executable(tzzero-http src/main.cpp)
-# target_link_libraries(tzzero-http tzzero_lib)
+// 主服务器可执行文件（暂时占位）
+// add_executable(tzzero-http src/main.cpp)
+// target_link_libraries(tzzero-http tzzero_lib)
 
 
 
