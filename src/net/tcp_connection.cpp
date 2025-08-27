@@ -18,9 +18,9 @@ TcpConnection::TcpConnection(core::EventLoop* loop, const std::string& name, int
     , name_(name)
     , state_(CONNECTING)
     , socket_fd_(sockfd)
-    , high_water_mark_(64 * 1024 * 1024) // 64MB
+    , high_water_mark_(64 * 1024 * 1024)  // 64MB
 {
-    // Get local and peer addresses
+    // 获取本地和对端地址
     struct sockaddr_in local_addr, peer_addr;
     socklen_t addr_len = sizeof(local_addr);
     
@@ -113,7 +113,7 @@ void TcpConnection::connection_established() {
     assert(state_ == CONNECTING);
     
     state_ = CONNECTED;
-    // Add to event loop for reading
+    // 添加到事件循环用于读取
     loop_->get_poller()->add_fd(socket_fd_, core::Poller::EVENT_READ, 
         [this](int fd, uint32_t events) {
             if (events & core::Poller::EVENT_READ) {
@@ -243,7 +243,7 @@ void TcpConnection::send_in_loop(const void* data, size_t len) {
     bool fault_error = false;
     
     if (state_ == CONNECTED && output_buffer_.readable_bytes() == 0) {
-        // Try to write directly
+        // 尝试直接写入
         nwrote = ::write(socket_fd_, data, len);
         if (nwrote >= 0) {
             remaining = len - nwrote;
@@ -274,7 +274,7 @@ void TcpConnection::send_in_loop(const void* data, size_t len) {
         
         output_buffer_.append(static_cast<const char*>(data) + nwrote, remaining);
         
-                        // Enable writing
+                        // 启用写入
                 loop_->get_poller()->modify_fd(socket_fd_, 
                                              core::Poller::EVENT_READ | core::Poller::EVENT_WRITE, 
                                              [this](int fd, uint32_t events) {
@@ -307,4 +307,4 @@ void TcpConnection::force_close_in_loop() {
     }
 }
 
-} // namespace tzzero::net
+}  // namespace tzzero::net

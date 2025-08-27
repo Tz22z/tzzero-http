@@ -27,4 +27,4 @@ private:
     static constexpr int kInitEventListSize = 16;
 };
 
-} // namespace tzzero::core
+}  // namespace tzzero::core

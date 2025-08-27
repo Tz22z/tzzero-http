@@ -28,7 +28,7 @@ EventLoop::EventLoop()
         t_loop_in_this_thread = this;
     }
 
-    // Add wakeup fd to poller
+    // 将唤醒文件描述符添加到轮询器
     poller_->add_fd(wakeup_fd_, Poller::EVENT_READ, [this](int, uint32_t) {
         handle_wake_up();
     });
@@ -51,7 +51,7 @@ void EventLoop::loop() {
     while (!quit_) {
         active_events.clear();
         
-        // Poll for events with timeout
+        // 带超时轮询事件
         int timeout_ms = timer_queue_->get_next_timeout();
         int num_events = poller_->poll(timeout_ms, active_events);
         
@@ -61,17 +61,17 @@ void EventLoop::loop() {
             break;
         }
 
-        // Handle timer events
+        // 处理定时器事件
         timer_queue_->process_expired_timers();
 
-        // Handle I/O events
+        // 处理 I/O 事件
         for (const auto& event : active_events) {
             if (event.callback) {
                 event.callback(event.fd, event.events);
             }
         }
 
-        // Handle pending functors
+        // 处理待执行的函数对象
         do_pending_functors();
     }
 
@@ -150,4 +150,4 @@ void EventLoop::do_pending_functors() {
     calling_pending_functors_ = false;
 }
 
-} // namespace tzzero::core
+}  // namespace tzzero::core

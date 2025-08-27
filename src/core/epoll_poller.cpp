@@ -114,4 +114,4 @@ uint32_t EpollPoller::epoll_to_events(uint32_t epoll_events) const {
     return events;
 }
 
-} // namespace tzzero::core
+}  // namespace tzzero::core

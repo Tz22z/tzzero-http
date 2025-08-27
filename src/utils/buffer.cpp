@@ -173,7 +173,7 @@ const char* Buffer::find_eol(const char* start) const {
 }
 
 ssize_t Buffer::read_fd(int fd, int* saved_errno) {
-    // Use readv() with stack buffer to avoid frequent reallocation
+    // 使用 readv() 和栈缓冲区避免频繁重新分配
     char extrabuf[65536];
     struct iovec vec[2];
     const size_t writable = writable_bytes();
@@ -242,10 +242,10 @@ void Buffer::swap(Buffer& other) noexcept {
 
 void Buffer::make_space(size_t len) {
     if (writable_bytes() + prependable_bytes() < len + kCheapPrepend) {
-        // Grow the buffer
+        // 扩大缓冲区
         buffer_.resize(write_index_ + len);
     } else {
-        // Move readable data to the front
+        // 将可读数据移动到前面
         size_t readable = readable_bytes();
         std::copy(begin() + read_index_, begin() + write_index_, begin() + kCheapPrepend);
         read_index_ = kCheapPrepend;
@@ -253,4 +253,4 @@ void Buffer::make_space(size_t len) {
     }
 }
 
-} // namespace tzzero::utils
+}  // namespace tzzero::utils
