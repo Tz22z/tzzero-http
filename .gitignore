@@ -1,0 +1,27 @@
+# Build directories
+build/
+bin/
+lib/
+
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+tzzero-http
+tzzero-http_bench
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
