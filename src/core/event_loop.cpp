@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <cassert>
 #include <iostream>
+#include <cerrno>
+#include <cstring>
 
 namespace tzzero::core {
 
@@ -56,9 +58,16 @@ void EventLoop::loop() {
         int num_events = poller_->poll(timeout_ms, active_events);
         
         if (num_events < 0) {
-            // 简单处理错误 - 真实项目中这里会记录日志
-            std::cerr << "Poller error" << std::endl;
-            break;
+            int saved_errno = errno;
+            if (saved_errno == EINTR) {
+                // 被信号中断，继续循环
+                continue;
+            } else {
+                // 其他错误，记录并退出
+                std::cerr << "Poller error: " << strerror(saved_errno) 
+                         << " (errno=" << saved_errno << ")" << std::endl;
+                break;
+            }
         }
 
         // 处理定时器事件
