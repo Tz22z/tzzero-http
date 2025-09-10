@@ -48,7 +48,7 @@ set(TZZERO_SOURCES
     
     # HTTP 模块
     src/http/http_request.cpp
-    # src/http/http_response.cpp
+    src/http/http_response.cpp
     # src/http/http_parser.cpp  
     # src/http/http_server.cpp
 )
