@@ -38,7 +38,7 @@ private:
     std::string output_file_;
     std::ofstream file_stream_;
     size_t current_file_size_{0};
-    size_t max_file_size_{100 * 1024 * 1024}; // 100MB default
+    size_t max_file_size_{100 * 1024 * 1024};  // 默认 100MB
     int max_files_{10};
     
     void rotate_log_file();
@@ -46,7 +46,7 @@ private:
     std::string get_timestamp() const;
 };
 
-// Convenience macros
+// 便捷宏定义
 #define LOG_DEBUG(msg) \
     do { \
         if (tzzero::utils::Logger::instance().get_level() <= tzzero::utils::LogLevel::DEBUG) { \
@@ -85,7 +85,7 @@ private:
         tzzero::utils::Logger::instance().log(tzzero::utils::LogLevel::FATAL, __FILE__, __LINE__, oss.str()); \
     } while(0)
 
-} // namespace tzzero::utils
+}  // namespace tzzero::utils
 
 
 

@@ -21,32 +21,32 @@ public:
     EventLoop();
     ~EventLoop();
 
-    // Non-copyable
+    // 不可拷贝
     EventLoop(const EventLoop&) = delete;
     EventLoop& operator=(const EventLoop&) = delete;
 
-    // Start the event loop in current thread
+    // 在当前线程启动事件循环
     void loop();
     
-    // Stop the event loop
+    // 停止事件循环
     void quit();
     
-    // Check if running in loop thread
+    // 检查是否在循环线程中运行
     bool is_in_loop_thread() const;
     
-    // Execute callback in loop thread
+    // 在循环线程中执行回调
     void run_in_loop(EventCallback cb);
     void queue_in_loop(EventCallback cb);
     
-    // Timer operations
+    // 定时器操作
     uint64_t run_after(double delay_seconds, EventCallback cb);
     uint64_t run_every(double interval_seconds, EventCallback cb);
     void cancel_timer(uint64_t timer_id);
     
-    // Get poller for connection management
+    // 获取轮询器用于连接管理
     Poller* get_poller() const { return poller_.get(); }
     
-    // Thread management
+    // 线程管理
     std::thread::id get_thread_id() const { return thread_id_; }
 
 private:
@@ -61,14 +61,14 @@ private:
     std::atomic<bool> quit_{false};
     std::thread::id thread_id_;
     
-    // For cross-thread calls
+    // 用于跨线程调用
     int wakeup_fd_;
     std::mutex mutex_;
     std::vector<EventCallback> pending_functors_;
     bool calling_pending_functors_{false};
 };
 
-} // namespace tzzero::core
+}  // namespace tzzero::core
 
 
 

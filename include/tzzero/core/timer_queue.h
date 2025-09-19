@@ -42,20 +42,20 @@ public:
     explicit TimerQueue(EventLoop* loop);
     ~TimerQueue();
 
-    // Non-copyable
+    // 不可拷贝
     TimerQueue(const TimerQueue&) = delete;
     TimerQueue& operator=(const TimerQueue&) = delete;
 
-    // Add timer, returns timer id
+    // 添加定时器，返回定时器ID
     uint64_t add_timer(double when, double interval, TimerCallback cb);
     
-    // Cancel timer
+    // 取消定时器
     void cancel_timer(uint64_t timer_id);
     
-    // Get next timeout in milliseconds, -1 for no timeout
+    // 获取下一次超时时间（毫秒），-1表示无超时
     int get_next_timeout() const;
     
-    // Process expired timers
+    // 处理已过期的定时器
     void process_expired_timers();
 
 private:
@@ -81,4 +81,4 @@ private:
     ActiveTimerSet canceling_timers_;
 };
 
-} // namespace tzzero::core
+}  // namespace tzzero::core
