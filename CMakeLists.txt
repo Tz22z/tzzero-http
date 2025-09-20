@@ -45,12 +45,14 @@ set(TZZERO_SOURCES
     # 网络模块
     src/net/tcp_connection.cpp
     src/net/acceptor.cpp
-    
+    src/net/event_loop_thread_pool.cpp
+    src/net/tcp_server.cpp
+
     # HTTP 模块
     src/http/http_request.cpp
     src/http/http_response.cpp
-    # src/http/http_parser.cpp  
-    # src/http/http_server.cpp
+    src/http/http_parser.cpp
+    src/http/http_server.cpp
 )
 
 # 主库
