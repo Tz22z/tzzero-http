@@ -63,7 +63,7 @@ void TcpConnection::send(const std::string& message) {
     send(message.data(), message.size());
 }
 
-void TcpConnection::send(utils::Buffer& buffer) {
+void TcpConnection::send(tzzero::utils::Buffer& buffer) {
     if (state_ == CONNECTED) {
         if (loop_->is_in_loop_thread()) {
             send_in_loop(buffer.peek(), buffer.readable_bytes());

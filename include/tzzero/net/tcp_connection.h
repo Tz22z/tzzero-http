@@ -1,13 +1,14 @@
 #pragma once
 
-#include "tzzerohttp/utils/buffer.h
+#include "tzzero/utils/buffer.h"
+
 #include <memory>
 #include <functional>
 #include <string>
 #include <atomic>
 #include <any>
 
-namespace tzzerohttp::core {
+namespace tzzero::core {
 class EventLoop;
 }
 
@@ -15,7 +16,7 @@ namespace tzzero::net {
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 public:
-    using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, utils::Buffer&)>;    
+    using MessageCallback = std::function<void(const std::shared_ptr<TcpConnection>&, tzzero::utils::Buffer&)>;    
     using CloseCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using WriteCompleteCallback = std::function<void(const std::shared_ptr<TcpConnection>&)>;
     using HighWaterMarkCallback = std::function<void(const std::shared_ptr<TcpConnection>&, size_t)>;
@@ -49,7 +50,7 @@ public:
     // 输入输出操作
     void send(const void* data, size_t len);
     void send(const std::string& message);
-    void send(utils::Buffer& buffer);
+    void send(tzzero::utils::Buffer& buffer);
     void shutdown();
     void force_close();
 
@@ -64,8 +65,8 @@ public:
     void connection_destroyed();
 
     // 缓冲区管理
-    utils::Buffer& get_input_buffer() { return input_buffer_; }
-    utils::Buffer& get_output_buffer() { return output_buffer_; }
+    tzzero::utils::Buffer& get_input_buffer() { return input_buffer_; }
+    tzzero::utils::Buffer& get_output_buffer() { return output_buffer_; }
 
     // TCP 选项
     void set_tcp_no_delay(bool on);
@@ -88,14 +89,13 @@ private:
 
     core::EventLoop* loop_;
     const std::string name_;
-    int socket_fd_;
-
+    State state_;
     int socket_fd_;
     std::string local_addr_;
     std::string peer_addr_;
 
-    utils::Buffer input_buffer_;
-    utils::Buffer output_buffer_;
+    tzzero::utils::Buffer input_buffer_;
+    tzzero::utils::Buffer output_buffer_;
     size_t high_water_mark_;
 
     MessageCallback message_callback_;
