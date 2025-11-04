@@ -39,10 +39,20 @@ void Acceptor::listen() {
     bind_and_listen();
 
     // 添加到事件循环并设置回调
-    loop_->get_poller()->add_fd(accept_fd_, 
-                               core::Poller::EVENT_READ, 
+    loop_->get_poller()->add_fd(accept_fd_,
+                               core::Poller::EVENT_READ,
                                [this](int, uint32_t) { handle_read(); });
     listening_ = true;
+}
+
+void Acceptor::disable_listening() {
+    if (!listening_) {
+        return;
+    }
+
+    // 从事件循环中移除accept_fd_
+    loop_->get_poller()->remove_fd(accept_fd_);
+    listening_ = false;
 }
 
 void Acceptor::handle_read() {
