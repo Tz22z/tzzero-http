@@ -2,21 +2,51 @@
 #include "tzzero/http/http_server.h"
 #include "tzzero/http/http_request.h"
 #include "tzzero/http/http_response.h"
+#include "tzzero/utils/logger.h"
 #include <iostream>
 #include <csignal>
 #include <ctime>
+#include <getopt.h>
+#include <thread>
 
 using namespace tzzero::core;
 using namespace tzzero::http;
+using namespace tzzero::utils;
 
-// 全局事件循环指针，用于信号处理
+// 全局指针，用于信号处理
 EventLoop* g_loop = nullptr;
+HttpServer* g_server = nullptr;
 
 void signal_handler(int sig) {
-    if (g_loop) {
-        std::cout << "\nReceived signal " << sig << ", shutting down..." << std::endl;
-        g_loop->quit();
+    if (sig == SIGINT || sig == SIGTERM) {
+        std::cout << "\n正在优雅关闭服务器..." << std::endl;
+        if (g_server) {
+            g_server->stop();
+        }
+        if (g_loop) {
+            g_loop->quit();
+        }
     }
+}
+
+void setup_signal_handlers() {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGPIPE, SIG_IGN); // 忽略SIGPIPE
+}
+
+void print_usage(const char* program_name) {
+    std::cout << "用法: " << program_name << " [选项]\n"
+              << "选项:\n"
+              << "  -h, --help           显示帮助信息\n"
+              << "  -p, --port PORT      监听端口 (默认: 3000)\n"
+              << "  -a, --addr ADDR      监听地址 (默认: 0.0.0.0)\n"
+              << "  -t, --threads NUM    工作线程数 (默认: CPU核心数)\n"
+              << "  -k, --keepalive      启用HTTP keep-alive (默认: 启用)\n"
+              << "  -l, --log-file FILE  日志输出文件 (默认: 仅控制台)\n"
+              << "  -L, --log-level LVL  日志级别: DEBUG, INFO, WARN, ERROR (默认: INFO)\n"
+              << "  -v, --verbose        详细输出\n"
+              << std::endl;
 }
 
 // 创建欢迎页面
@@ -25,41 +55,15 @@ std::string create_welcome_page() {
 <html>
 <head>
     <title>TZZero HTTP Server</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 20px; }
-        .info { background: #ecf0f1; padding: 20px; border-radius: 5px; margin: 20px 0; }
-        .feature { background: #e8f5e8; padding: 15px; margin: 10px 0; border-left: 4px solid #27ae60; }
-        .status { color: #27ae60; font-weight: bold; }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="header">🚀 欢迎使用 TZZero HTTP 服务器!</h1>
-
-        <div class="info">
-            <h3>服务器信息:</h3>
-            <p><strong>版本:</strong> 1.0.0</p>
-            <p><strong>状态:</strong> <span class="status">正常运行</span></p>
-        </div>
-
-        <h3>服务器特性:</h3>
-        <div class="feature">✨ 事件驱动架构 - 基于Reactor模式</div>
-        <div class="feature">🔥 高并发支持 - 多线程EventLoop池</div>
-        <div class="feature">💎 现代C++20技术 - 智能指针与RAII</div>
-        <div class="feature">⚡ 专业HTTP解析 - 完整协议支持</div>
-        <div class="feature">🎯 零拷贝优化 - 高性能缓冲区管理</div>
-        <div class="feature">🔄 Keep-Alive支持 - 连接复用优化</div>
-
-        <div class="info">
-            <h3>测试接口:</h3>
-            <p>• <a href="/api/status">GET /api/status</a> - 服务器状态</p>
-            <p>• <a href="/api/hello">GET /api/hello</a> - JSON问候</p>
-            <p>• <a href="/test">GET /test</a> - 测试页面</p>
-        </div>
-    </div>
+    <h1>TZZero HTTP Server</h1>
+    <p>Server is running.</p>
+    <ul>
+        <li><a href="/api/status">Status API</a></li>
+        <li><a href="/api/hello">Hello API</a></li>
+        <li><a href="/test">Test Page</a></li>
+    </ul>
 </body>
 </html>)";
 }
@@ -79,23 +83,8 @@ void http_handler(const HttpRequest& req, HttpResponse& resp) {
         resp.set_status_code(HttpStatusCode::OK);
         resp.set_json_content_type();
         resp.set_body(R"({
-    "server": "TZZero HTTP Server",
-    "version": "1.0.0",
-    "status": "running",
-    "features": [
-        "HTTP/1.1",
-        "Event-Driven",
-        "Multi-threaded",
-        "Keep-Alive",
-        "C++20",
-        "High-Performance"
-    ],
-    "architecture": {
-        "pattern": "Reactor",
-        "io_model": "Non-blocking I/O + Epoll",
-        "threading": "EventLoop Thread Pool",
-        "memory": "Zero-copy Buffer"
-    }
+    "status": "ok",
+    "version": "1.0.0"
 })");
 
     } else if (path == "/api/hello") {
@@ -103,10 +92,7 @@ void http_handler(const HttpRequest& req, HttpResponse& resp) {
         resp.set_status_code(HttpStatusCode::OK);
         resp.set_json_content_type();
         resp.set_body(R"({
-    "message": "Hello from TZZero HTTP Server!",
-    "timestamp": )" + std::to_string(time(nullptr)) + R"(,
-    "protocol": "HTTP/1.1",
-    "features": ["Keep-Alive", "Multi-threaded", "Event-Driven"]
+    "message": "hello"
 })");
 
     } else if (path == "/test") {
@@ -116,17 +102,13 @@ void http_handler(const HttpRequest& req, HttpResponse& resp) {
         resp.set_body(R"(<!DOCTYPE html>
 <html>
 <head>
-    <title>TZZero Test Page</title>
-    <meta charset="UTF-8">
+    <title>Test Page</title>
 </head>
 <body>
-    <h1>🧪 TZZero HTTP Server 测试页面</h1>
-    <p>这是一个测试页面，用于验证服务器功能。</p>
-    <p><strong>服务器时间:</strong> )" + std::to_string(time(nullptr)) + R"(</p>
-    <p><strong>请求路径:</strong> )" + req.get_path() + R"(</p>
-    <p><strong>HTTP方法:</strong> )" + req.get_method_string() + R"(</p>
-    <p><strong>HTTP版本:</strong> )" + req.get_version_string() + R"(</p>
-    <p><a href="/">← 返回首页</a></p>
+    <h1>Test Page</h1>
+    <p>Method: )" + req.get_method_string() + R"(</p>
+    <p>Path: )" + req.get_path() + R"(</p>
+    <p><a href="/">Home</a></p>
 </body>
 </html>)");
 
@@ -137,48 +119,109 @@ void http_handler(const HttpRequest& req, HttpResponse& resp) {
         resp.set_body(R"(<!DOCTYPE html>
 <html>
 <head>
-    <title>404 - Page Not Found</title>
-    <meta charset="UTF-8">
+    <title>404 Not Found</title>
 </head>
 <body>
-    <h1>404 - 页面未找到</h1>
-    <p>抱歉，您请求的页面不存在。</p>
-    <p><a href="/">返回首页</a> | <a href="/api/status">服务器状态</a></p>
+    <h1>404 Not Found</h1>
+    <p><a href="/">Home</a></p>
 </body>
 </html>)");
     }
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << "TZZero HTTP Server Starting..." << std::endl;
-
-    // 解析端口参数
+    // 默认配置
+    std::string listen_addr = "0.0.0.0";
     uint16_t port = 3000;
-    if (argc > 1) {
-        port = static_cast<uint16_t>(std::atoi(argv[1]));
-    }
+    int thread_num = std::thread::hardware_concurrency();
+    bool enable_keepalive = true;
+    bool verbose = false;
+    std::string log_file;
+    std::string log_level = "INFO";
 
-    // 解析线程数参数
-    int thread_num = 4;  // 默认4个工作线程
-    if (argc > 2) {
-        thread_num = std::atoi(argv[2]);
+    // 命令行参数解析
+    struct option long_options[] = {
+        {"help", no_argument, 0, 'h'},
+        {"port", required_argument, 0, 'p'},
+        {"addr", required_argument, 0, 'a'},
+        {"threads", required_argument, 0, 't'},
+        {"keepalive", no_argument, 0, 'k'},
+        {"log-file", required_argument, 0, 'l'},
+        {"log-level", required_argument, 0, 'L'},
+        {"verbose", no_argument, 0, 'v'},
+        {0, 0, 0, 0}
+    };
+
+    int c;
+    while ((c = getopt_long(argc, argv, "hp:a:t:kl:L:v", long_options, nullptr)) != -1) {
+        switch (c) {
+            case 'h':
+                print_usage(argv[0]);
+                return 0;
+            case 'p':
+                port = static_cast<uint16_t>(std::stoi(optarg));
+                break;
+            case 'a':
+                listen_addr = optarg;
+                break;
+            case 't':
+                thread_num = std::stoi(optarg);
+                break;
+            case 'k':
+                enable_keepalive = true;
+                break;
+            case 'l':
+                log_file = optarg;
+                break;
+            case 'L':
+                log_level = optarg;
+                break;
+            case 'v':
+                verbose = true;
+                break;
+            default:
+                print_usage(argv[0]);
+                return 1;
+        }
     }
 
     try {
+        // 配置日志系统
+        auto& logger = Logger::instance();
+
+        // 设置日志级别
+        if (log_level == "DEBUG") logger.set_level(LogLevel::DEBUG);
+        else if (log_level == "INFO") logger.set_level(LogLevel::INFO);
+        else if (log_level == "WARN") logger.set_level(LogLevel::WARN);
+        else if (log_level == "ERROR") logger.set_level(LogLevel::ERROR);
+        else {
+            std::cerr << "无效的日志级别: " << log_level << std::endl;
+            return 1;
+        }
+
+        // 设置日志文件（如果指定）
+        if (!log_file.empty()) {
+            logger.set_output_file(log_file);
+            logger.set_max_file_size(100); // 100MB
+            logger.set_max_files(10);
+        }
+
+        // 设置信号处理器
+        setup_signal_handlers();
+
+        std::cout << "TZZero HTTP 服务器启动中..." << std::endl;
+
         // 创建事件循环
         EventLoop loop;
         g_loop = &loop;
 
-        // 设置信号处理
-        std::signal(SIGINT, signal_handler);
-        std::signal(SIGTERM, signal_handler);
-
         // 创建HTTP服务器
-        HttpServer server(&loop, "0.0.0.0", port, "TZZeroHTTP");
+        HttpServer server(&loop, listen_addr, port, "TZZeroHTTP");
+        g_server = &server;
 
         // 配置服务器
         server.set_thread_num(thread_num);
-        server.enable_keep_alive(true);
+        server.enable_keep_alive(enable_keepalive);
         server.set_keep_alive_timeout(60);
 
         // 设置HTTP请求处理器
@@ -189,23 +232,24 @@ int main(int argc, char* argv[]) {
 
         // 添加状态报告定时器
         loop.run_every(30.0, []() {
-            std::cout << "Server status: running normally..." << std::endl;
+            std::cout << "服务器状态: 运行正常..." << std::endl;
         });
 
-        std::cout << "Server started on port " << port << " with " << thread_num << " worker threads" << std::endl;
-        std::cout << "Visit http://localhost:" << port << " to test" << std::endl;
-        std::cout << "Press Ctrl+C to stop" << std::endl;
+        std::cout << "服务器已启动在 " << listen_addr << ":" << port
+                  << ", 使用 " << thread_num << " 个工作线程" << std::endl;
+        std::cout << "访问 http://localhost:" << port << " 进行测试" << std::endl;
+        std::cout << "按 Ctrl+C 停止" << std::endl;
 
         // 启动事件循环
         loop.loop();
 
-        std::cout << "Event loop stopped" << std::endl;
+        std::cout << "事件循环已停止" << std::endl;
 
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "错误: " << e.what() << std::endl;
         return 1;
     }
 
-    std::cout << "TZZero HTTP Server stopped" << std::endl;
+    std::cout << "TZZero HTTP 服务器已停止" << std::endl;
     return 0;
 }
