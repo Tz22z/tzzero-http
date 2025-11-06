@@ -27,6 +27,7 @@ public:
 
     bool listening() const { return listening_; }
     void listen();
+    void disable_listening();
 
 private:
     void handle_read();

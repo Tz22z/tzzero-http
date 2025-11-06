@@ -51,8 +51,24 @@ void TcpServer::start() {
 }
 
 void TcpServer::stop() {
-    // TODO: 实现优雅关闭
     LOG_INFO("TcpServer [" << name_ << "] stopping");
+
+    // 在主线程中执行关闭操作
+    loop_->run_in_loop([this]() {
+        // 1. 停止接受新连接
+        acceptor_->disable_listening();
+
+        // 2. 关闭所有现有连接
+        for (auto& item : connections_) {
+            TcpConnectionPtr conn = item.second;
+            // 在连接所属的IO线程中关闭连接
+            conn->get_loop()->run_in_loop([conn]() {
+                conn->shutdown();
+            });
+        }
+    });
+
+    LOG_INFO("TcpServer [" << name_ << "] stopped");
 }
 
 void TcpServer::set_thread_num(int num_threads) {
