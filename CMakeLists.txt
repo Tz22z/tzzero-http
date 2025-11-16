@@ -35,13 +35,14 @@ set(TZZERO_SOURCES
     # 工具类
     src/utils/buffer.cpp
     src/utils/logger.cpp
-    
+    src/utils/thread_pool.cpp
+
     # 核心模块
     src/core/poller.cpp
     src/core/epoll_poller.cpp
     src/core/timer_queue.cpp
     src/core/event_loop.cpp
-    
+
     # 网络模块
     src/net/tcp_connection.cpp
     src/net/acceptor.cpp
@@ -68,6 +69,47 @@ endif()
 # 主服务器可执行文件
 add_executable(tzzero-http src/main.cpp)
 target_link_libraries(tzzero-http tzzero_lib)
+
+# 基准测试工具
+if(BUILD_BENCHMARKS)
+    add_executable(tzzero-benchmark tools/benchmark.cpp)
+    target_link_libraries(tzzero-benchmark tzzero_lib)
+endif()
+
+# 测试
+if(BUILD_TESTS)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    enable_testing()
+    include(GoogleTest)
+
+    # 添加测试文件
+    add_executable(tzzero_tests
+        tests/buffer_test.cpp
+        tests/logger_test.cpp
+        tests/thread_pool_test.cpp
+        tests/memory_pool_test.cpp
+        tests/http_parser_test.cpp
+        tests/http_request_test.cpp
+        tests/http_response_test.cpp
+    )
+
+    target_link_libraries(tzzero_tests
+        tzzero_lib
+        GTest::gtest_main
+        GTest::gmock_main
+    )
+
+    gtest_discover_tests(tzzero_tests)
+endif()
 
 
 
